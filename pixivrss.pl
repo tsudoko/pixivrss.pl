@@ -65,7 +65,7 @@ $html =~ s/.*<ul class="_image-items autopagerize_page_element">(.*)<\/ul>.*/$1/
 
 # Output header
 print <<RSS
-Content-type: application/xhtml+xml
+Content-type: application/atom+xml
 
 <?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
@@ -88,8 +88,27 @@ while( $html =~ /(mode=medium&amp;illust_id=\d*)".*?<h1 class="title" title="([^
         my $url = $1;
         $url = "member_illust.php?$url";
         my $user = $3;
+
         my $thumb = $4;
-        my ($thumb_file) = ($thumb =~ m|img/[^/]*/(.*)$|);
+        my @thumb_url = split('/', $thumb);
+        my $thumb_file = $thumb_url[-1];
+
+        # The part of the URL before "img" doesn't have a fixed number of elements
+        for (my $i = 0; ($i <= $#thumb_url); $i++) {
+                if ($thumb_url[$i] eq "img") {
+                        splice(@thumb_url, 0, $i);
+                        last;
+                }
+        }
+
+        my $year   = $thumb_url[1];
+        my $month  = $thumb_url[2];
+        my $day    = $thumb_url[3];
+        my $hour   = $thumb_url[4];
+        my $minute = $thumb_url[5];
+        my $second = $thumb_url[6];
+
+        my $date = $year . '-' . $month . '-' . $day . 'T' . $hour . ':' . $minute . ':' . $second . '+09:00';
 
         # Sanitize. You never know. YOU NEVER KNOW.
         $thumb_file =~ s/(?:\.\.|\$|\/)//gi;
@@ -116,6 +135,7 @@ while( $html =~ /(mode=medium&amp;illust_id=\d*)".*?<h1 class="title" title="([^
         print "]]></description>\n";
         print "<guid>http://www.pixiv.net/$url</guid>\n";
         print "<link>http://www.pixiv.net/$url</link>\n";
+        print "<updated>$date</updated>\n";
         print "</item>\n";
 }
 
